@@ -12,12 +12,14 @@ const organizationSchema = new Schema({
     },
     location: {
         type: [Number],
-        required: [true, 'Location is required and should be an array of two floats'],
         validate: {
             validator: function (val) {
                 return Array.isArray(val) && val.length === 2 && val.every(coord => typeof coord === 'number');
             },
             message: 'Location must be an array of two floats [longitude, latitude]'
+        },
+        required: function () {
+            return this.isOrganization === true;
         }
     },
     phoneNo: {
