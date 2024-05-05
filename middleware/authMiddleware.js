@@ -13,17 +13,18 @@ const protect = asyncHandler(async (req, res, next) => {
         //Verify Token
         const verified = jwt.verify(token, process.env.JWT_SECRET)
         //Get user id from token
-        const organization = await Organization.findById(verified.id).select("-password")
+        console.log(verified)
+        const organization = await Organization.findById(verified.organizationId).select("-password")
         if (!organization) {
             res.status(404)
-            throw new Error("User not found")
+            throw new Error("Organization not found")
         }
         req.organization = organization
         next()
     }
     catch (e) {
         res.status(404)
-        throw new Error("User not found")
+        throw new Error(e.message)
     }
 })
 
