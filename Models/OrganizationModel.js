@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const bcrypt = require('bcryptjs');
+
 
 const organizationSchema = new Schema({
     name: {
@@ -46,12 +48,22 @@ const organizationSchema = new Schema({
         }
     },
     image: {
-        type: String,
-        default: "",
+        type: Object,
+        default: {},
         required: function () {
             return this.isOrganization === true;
         }
     }
+});
+
+//encrypt password before saving
+organizationSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        next();
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 const Organization = mongoose.model('Organization', organizationSchema);
