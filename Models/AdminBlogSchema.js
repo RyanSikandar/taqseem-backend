@@ -14,6 +14,9 @@ const adminBlogSchema = new Schema({
     image: {
         type: String
     }
+},
+{
+    timestamps : true
 });
 
 const AdminBlog = mongoose.model('AdminBlog', adminBlogSchema);
