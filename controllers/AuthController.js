@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 const s3Client = new S3Client({
     region: "us-east-1",
     credentials: {
-      
+
     }
 });
 
@@ -19,10 +19,10 @@ const generateToken = (id) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, description, email, location, password } = req.body;
+    const { name, description, email, location, password, cnic } = req.body;
 
     // Validation
-    if (!name || !email || !password || !description || !location) {
+    if (!name || !email || !password || !description || !location || !req.file || !cnic) {
         res.status(400);
         throw new Error('Please provide all fields');
     }
@@ -33,7 +33,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Check if user email already exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email, cnic });
     if (userExists) {
         res.status(400);
         throw new Error('User already exists');

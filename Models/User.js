@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
-    email:{
+    email: {
         type: String,
         required: [true, 'Email is required'],
         unique: true
     },
-    password:{
+    password: {
         type: String,
         required: [true, 'Password is required']
     },
@@ -26,6 +26,11 @@ const userSchema = new Schema({
         type: String,
         required: [true, 'Location is required']
     },
+    cnic: {
+        type: Number,
+        required: [true, 'CNIC is required'],
+        unique: true
+    }
 });
 
 const User = mongoose.model('User', userSchema);
