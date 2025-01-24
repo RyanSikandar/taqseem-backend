@@ -5,18 +5,54 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { v4: uuidv4 } = require('uuid');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const s3Client = new S3Client({
     region: "us-east-1",
     credentials: {
-
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
     }
 });
+
+
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '1d'
     })
 };
+
+const generatePresignedUrl = asyncHandler(async (req, res) => {
+    const { fileType } = req.query;
+    console.log(fileType);
+
+    if (!fileType) {
+        res.status(400);
+        throw new Error('File type is required');
+    }
+
+    try {
+        // Generate a unique file key
+        const fileKey = `${uuidv4()}.${fileType.split('/')[1]}`;
+
+        // Pre-signed URL parameters
+        const params = {
+            Bucket: 'ryan-taqseem',
+            Key: fileKey,
+            ContentType: fileType,
+            ACL: 'public-read',
+        };
+
+        // Create a pre-signed URL for PUT
+        const command = new PutObjectCommand(params);
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1-hour expiration
+
+        res.json({ url, key: fileKey });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error generating pre-signed URL' });
+    }
+});
 
 const registerUser = asyncHandler(async (req, res) => {
     const { name, description, email, location, password, cnic } = req.body;
@@ -200,5 +236,5 @@ const loginStatus = asyncHandler(async (req, res) => {
 module.exports = {
     registerUser,
     loginUser,
-    logoutUser, getUser, loginStatus
+    logoutUser, getUser, loginStatus, generatePresignedUrl
 };
