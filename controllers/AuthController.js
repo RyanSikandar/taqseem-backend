@@ -2,8 +2,15 @@
 const asyncHandler = require('express-async-handler')
 const User = require('../models/User')
 const jwt = require('jsonwebtoken')
-const becrypt = require('bcryptjs')
-const crypto = require('crypto')
+const bcrypt = require('bcryptjs')
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { v4: uuidv4 } = require('uuid');
+const s3Client = new S3Client({
+    region: "us-east-1",
+    credentials: {
+      
+    }
+});
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -12,52 +19,95 @@ const generateToken = (id) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, email, password } = req.body
-    // validation
-    if (!name || !email || !password) {
-        res.status(400)
-        throw new Error("Please provide all fields")
-    }
-    if (password.length < 6) {
-        res.status(400)
-        throw new Error("Password must be atleast 6 characters")
-    }
-    // Check if user email already exists
-    const userExists = await User.findOne({ email })
+    const { name, description, email, location, password } = req.body;
 
-    if (userExists) {
-        res.status(400)
-        throw new Error("User already exists")
+    // Validation
+    if (!name || !email || !password || !description || !location) {
+        res.status(400);
+        throw new Error('Please provide all fields');
     }
-    // Create a new user
+
+    if (password.length < 6) {
+        res.status(400);
+        throw new Error('Password must be at least 6 characters');
+    }
+
+    // Check if user email already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        res.status(400);
+        throw new Error('User already exists');
+    }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Ensure the file exists and is of the correct type
+    const file = req.file;
+    if (!file) {
+        res.status(400);
+        throw new Error('No file uploaded');
+    }
+
+    if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
+        res.status(400);
+        throw new Error('Only JPEG and PNG images are allowed');
+    }
+
+    // Upload image to S3
+    const key = `${uuidv4()}.${file.mimetype.split('/')[1]}`;
+    const params = {
+        Bucket: 'ryan-taqseem',
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        ACL: 'public-read', // Optional: makes the file publicly accessible
+    };
+
+    try {
+        const data = await s3Client.send(new PutObjectCommand(params));
+        console.log('File uploaded successfully:', data);
+    } catch (err) {
+        console.error('Error uploading file:', err);
+        res.status(500);
+        throw new Error('Error uploading image to S3');
+    }
+
+    // Create new user
     const newUser = await User.create({
         name,
         email,
-        password
-    })
-    //Genearate the token for the user
-    const token = generateToken(newUser._id)
+        password: hashedPassword,
+        description,
+        location,
+        image: key, // Store the S3 file key in the user's profile
+    });
 
-    //Send http only cookie 
-    res.cookie("token", token, { httpOnly: true, expires: new Date(Date.now() + 24 * 60 * 60 * 1000), sameSite: "none", secure: true })
-    //same site means front end and backend are on different domains
-    //secure means it is only sent over https
+    // Generate the token for the user
+    const token = generateToken(newUser._id);
+
+    // Send HTTP-only cookie
+    res.cookie('token', token, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        sameSite: 'none',
+        secure: true,
+    });
 
     // Check if the user was successfully created
     if (newUser) {
-        const { _id, name, email, photo, phoneNumber, bio } = newUser
+        const { _id, name, email, description } = newUser;
         res.status(201).json({
             _id,
             name,
             email,
-            photo,
-            phoneNumber,
-            bio,
-            token
-        })
+            image: key, // Return the image key
+            description,
+        });
     } else {
-        res.status(400)
-        throw new Error("Invalid user data")
+        res.status(400);
+        throw new Error('Invalid user data');
     }
 });
 
@@ -147,36 +197,8 @@ const loginStatus = asyncHandler(async (req, res) => {
     res.send("User is logged in")
 })
 
-const updateUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id)
-    if (user) {
-        const { name, email, photo, phoneNumber, bio } = user
-        user.email = email
-        user.name = req.body.name || name
-        user.photo = req.body.photo || photo
-        user.phoneNumber = req.body.phoneNumber || phoneNumber
-        user.bio = req.body.bio || bio
-        const updatedUser = await user.save()
-        res.status(200).json({
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            photo: updatedUser.photo,
-            phoneNumber: updatedUser.phoneNumber,
-            bio: updatedUser.bio
-        })
-    }
-    else {
-        res.status(404)
-        throw new Error("User not found")
-    }
-})
-
-
-// Export your controller functions
 module.exports = {
     registerUser,
-    resetPassword,
     loginUser,
-    logoutUser, getUser, loginStatus, updateUser, changePassword, forgotPassword
+    logoutUser, getUser, loginStatus
 };
