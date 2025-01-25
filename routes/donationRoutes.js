@@ -1,10 +1,13 @@
-const { addDonation, deleteFundraiser, closeFundraiser } = require('../controllers/donationController');
+const { addDonation, getAllDonations } = require('../controllers/donationController');
 const protect = require('../middleware/AuthMiddleware');
 
 const router = require('express').Router();
 
-// add
+// add a donation
 router.post('/', protect, addDonation);
+
+//get all donations
+router.get('/', getAllDonations);
 // delete
 // router.delete('/:id', deleteFundraiser);
 // // complete

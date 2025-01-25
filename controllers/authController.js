@@ -1,6 +1,6 @@
 // Import any necessary modules or dependencies
 const asyncHandler = require('express-async-handler')
-const User = require('../models/User')
+const User = require('../models/UserModel')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');

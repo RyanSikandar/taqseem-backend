@@ -62,6 +62,19 @@ const addDonation = async (req, res) => {
     }
 };
 
+const getAllDonations = async (req, res) => {
+    try {
+        // Fetch all donations from the database
+        const donations = await Donation.find().populate('author', 'name location image');
+
+        // Send the donations in the response
+        res.status(200).json({ success: true, donations });
+    } catch (err) {
+        // Handle errors
+        res.status(500).json({ message: err.message });
+    }
+}
+
 const deleteDonation = async (req, res) => {
     const DonationId = req.params.id;
 
@@ -109,5 +122,6 @@ const closeDonation = async (req, res) => {
 module.exports = {
     addDonation,
     deleteDonation,
-    closeDonation
+    closeDonation,
+    getAllDonations
 }

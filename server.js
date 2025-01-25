@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const authRoutes = require('./routes/AuthRoutes')
-const donationRoutes = require('./routes/fundraiserRoutes')
+const donationRoutes = require('./routes/donationRoutes')
 const app = express();
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
