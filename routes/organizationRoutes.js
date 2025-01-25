@@ -1,13 +1,13 @@
 const express = require('express');
-const protect = require('../middleware/authMiddleware')
+const protect = require('../middleware/AuthMiddleware')
 const router = express.Router();
-const { registerOrganization, loginOrganization,logoutOrganization} = require('../controllers/authController')
+const { registerOrganization, loginOrganization, logoutOrganization } = require('../controllers/AuthController')
 const { upload } = require('../utils/fileUpload')
 // Define your user routes here
-router.post("/register",upload.single("image"), registerOrganization);
+router.post("/register", upload.single("image"), registerOrganization);
 router.post("/login", loginOrganization);
 router.get("/logout", logoutOrganization)
-router.get("/getorg",protect, (req, res) => {
+router.get("/getorg", protect, (req, res) => {
     res.json(req.organization)
 })
 // router.get("/getuser", protect, getUser)
