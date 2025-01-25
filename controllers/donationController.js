@@ -1,3 +1,4 @@
+const Contribution = require("../models/ContributionSchema");
 const Donation = require("../models/DonationModel");
 
 const addDonation = async (req, res) => {
@@ -132,6 +133,21 @@ const userDonations = async (req, res) => {
     }
 }
 
+const getDonationContributions = async (req, res) => {
+    const DonationId = req.params.id;
+
+    try {
+        // Fetch all contributions for the Donation
+        const contributions = await Contribution.find({ donation: DonationId }).populate('donation', 'title').populate('donor', 'name location image');
+
+        // Send the contributions in the response
+        res.status(200).json({ success: true, contributions });
+    } catch (err) {
+        // Handle errors
+        res.status(500).json({ message: err.message });
+    }
+}
+
 
 
 // const deleteDonation = async (req, res) => {
@@ -183,5 +199,6 @@ module.exports = {
     userDonations,
     getAllDonations,
     getSingleDonation,
-    updateDonation
+    updateDonation,
+    getDonationContributions
 }
