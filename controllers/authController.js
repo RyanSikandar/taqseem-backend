@@ -1,6 +1,6 @@
 // Import any necessary modules or dependencies
 const asyncHandler = require('express-async-handler')
-const User = require('../models/UserModel')
+const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -79,10 +79,9 @@ const registerUser = asyncHandler(async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Validate image URL (Ensure it’s an S3 URL)
+    // Validate image URL (Optional: Ensure it’s an S3 URL)
     const s3BucketName = 'ryan-taqseem';
-    const s3BucketRegion = 'us-east-1';
-    if (!image.startsWith(`https://${s3BucketName}.s3.${s3BucketRegion}.amazonaws.com/`)) {
+    if (!image.startsWith(`https://${s3BucketName}.s3.amazonaws.com/`)) {
         res.status(400);
         throw new Error('Invalid image URL');
     }
