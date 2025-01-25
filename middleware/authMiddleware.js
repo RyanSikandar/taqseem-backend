@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const Organization = require("../Models/OrganizationModel");
+const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
 const protect = asyncHandler(async (req, res, next) => {
@@ -13,18 +13,17 @@ const protect = asyncHandler(async (req, res, next) => {
         //Verify Token
         const verified = jwt.verify(token, process.env.JWT_SECRET)
         //Get user id from token
-        console.log(verified)
-        const organization = await Organization.findById(verified.organizationId).select("-password")
-        if (!organization) {
+        const user = await User.findById(verified.id).select("-password")
+        if (!user) {
             res.status(404)
-            throw new Error("Organization not found")
+            throw new Error("User not found")
         }
-        req.organization = organization
+        req.user = user
         next()
     }
     catch (e) {
         res.status(404)
-        throw new Error(e.message)
+        throw new Error("User not found")
     }
 })
 
