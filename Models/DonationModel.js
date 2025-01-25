@@ -15,6 +15,14 @@ const donationSchema = new Schema({
     type: String,
     required: true
   },
+  cause: {
+    type: String,
+    required: true
+  },
+  donationUsage: {
+    type: String,
+    required: true
+  },
   description: {
     type: String,
     required: true
@@ -49,6 +57,10 @@ const donationSchema = new Schema({
     required: true
   },
   isCompleted: {
+    type: Boolean,
+    default: false
+  },
+  isFavourite: {
     type: Boolean,
     default: false
   }
