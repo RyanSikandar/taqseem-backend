@@ -1,8 +1,11 @@
 const router = require('express').Router();
-const multer = require('multer');
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-const {registerUser, generatePresignedUrl} = require('../controllers/AuthController')
-router.post('/register',registerUser)
-router.get('/presignedurl', generatePresignedUrl)
+const { registerUser, generatePresignedUrl, getUser, loginStatus, loginUser, logoutUser } = require('../controllers/AuthController');
+const protect = require('../middleware/AuthMiddleware');
+router.post('/register', registerUser)
+router.get('/presignedurl', protect, generatePresignedUrl);
+router.get('/user', protect, getUser)
+router.get('/loginstatus', loginStatus)
+router.post('/login', loginUser)
+router.get('/logout', protect, logoutUser)
+
 module.exports = router;

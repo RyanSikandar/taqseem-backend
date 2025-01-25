@@ -55,12 +55,12 @@ const generatePresignedUrl = asyncHandler(async (req, res) => {
 });
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, description, email, location, password, cnic } = req.body;
+    const { name, description, email, location, password, cnic, image } = req.body;
 
     // Validation
-    if (!name || !email || !password || !description || !location || !req.file || !cnic) {
+    if (!name || !email || !password || !description || !location || !cnic || !image) {
         res.status(400);
-        throw new Error('Please provide all fields');
+        throw new Error('Please provide all fields, including the image URL');
     }
 
     if (password.length < 6) {
@@ -79,35 +79,11 @@ const registerUser = asyncHandler(async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Ensure the file exists and is of the correct type
-    const file = req.file;
-    if (!file) {
+    // Validate image URL (Optional: Ensure it’s an S3 URL)
+    const s3BucketName = 'ryan-taqseem';
+    if (!image.startsWith(`https://${s3BucketName}.s3.amazonaws.com/`)) {
         res.status(400);
-        throw new Error('No file uploaded');
-    }
-
-    if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
-        res.status(400);
-        throw new Error('Only JPEG and PNG images are allowed');
-    }
-
-    // Upload image to S3
-    const key = `${uuidv4()}.${file.mimetype.split('/')[1]}`;
-    const params = {
-        Bucket: 'ryan-taqseem',
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: 'public-read', // Optional: makes the file publicly accessible
-    };
-
-    try {
-        const data = await s3Client.send(new PutObjectCommand(params));
-        console.log('File uploaded successfully:', data);
-    } catch (err) {
-        console.error('Error uploading file:', err);
-        res.status(500);
-        throw new Error('Error uploading image to S3');
+        throw new Error('Invalid image URL');
     }
 
     // Create new user
@@ -117,7 +93,8 @@ const registerUser = asyncHandler(async (req, res) => {
         password: hashedPassword,
         description,
         location,
-        image: key, // Store the S3 file key in the user's profile
+        cnic,
+        image: image, //storing the public url in the database
     });
 
     // Generate the token for the user
@@ -127,7 +104,7 @@ const registerUser = asyncHandler(async (req, res) => {
     res.cookie('token', token, {
         httpOnly: true,
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        sameSite: 'none',
+        sameSite: 'lax',
         secure: true,
     });
 
@@ -138,7 +115,7 @@ const registerUser = asyncHandler(async (req, res) => {
             _id,
             name,
             email,
-            image: key, // Return the image key
+            image: image,
             description,
         });
     } else {
@@ -146,6 +123,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error('Invalid user data');
     }
 });
+
 
 //Login User
 const loginUser = asyncHandler(async (req, res) => {
@@ -162,25 +140,22 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error("Invalid credentials, user does not exist")
     }
     //User exists, Check if password matches
-    const isMatch = await becrypt.compare(password, user.password)
+    const isMatch = await bcrypt.compare(password, user.password)
     //Genearate the token for the user
     const token = generateToken(user._id)
 
     //Send http only cookie 
-    res.cookie("token", token, { httpOnly: true, expires: new Date(Date.now() + 24 * 60 * 60 * 1000), sameSite: "none", secure: true })
+    res.cookie("token", token, { httpOnly: true, expires: new Date(Date.now() + 24 * 60 * 60 * 1000), sameSite: "lax", secure: true })
     //same site means front end and backend are on different domains
     //secure means it is only sent over https
 
     if (user && isMatch) {
-        const { _id, name, email, photo, phoneNumber, bio } = user
+        const { _id, name, email, image } = user
         res.status(200).json({
             _id,
             name,
             email,
-            photo,
-            phoneNumber,
-            bio,
-            token
+            image
         })
     }
     else {
@@ -195,7 +170,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 })
 const logoutUser = asyncHandler(async (req, res) => {
-    res.cookie("token", "", { httpOnly: true, expires: new Date(0), sameSite: "none", secure: true })
+    res.cookie("token", "", { httpOnly: true, expires: new Date(0), sameSite: "lax", secure: true })
     return res.status(200).json({ message: "User succesfully logged out." })
 })
 
@@ -203,14 +178,14 @@ const logoutUser = asyncHandler(async (req, res) => {
 const getUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).select("-password")
     if (user) {
-        const { _id, name, email, photo, phoneNumber, bio } = user
+        const { _id, name, email, image, description, cnic } = user
         res.status(200).json({
             _id,
             name,
             email,
-            photo,
-            phoneNumber,
-            bio
+            image,
+            description,
+            cnic
         })
     }
     else {

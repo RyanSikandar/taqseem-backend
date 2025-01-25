@@ -20,7 +20,8 @@ const userSchema = new Schema({
         required: [true, 'Description is required']
     },
     image: {
-        type: String
+        type: String,
+        required: [true, 'Image is required']
     },
     location: {
         type: String,
