@@ -1,29 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
-const bookmarkRoutes = require('./routes/bookmarkRoutes');
-const adminBlogRoutes = require('./routes/adminBlogRoutes');
-const fundraiserRoutes = require('./routes/fundraiserRoutes');
-const organizationRoutes = require('./routes/organizationRoutes');
-
-const cookieParser = require('cookie-parser');
-
-
-const path = require('path');
-
+const authRoutes = require('./routes/AuthRoutes')
 const app = express();
+const cookieParser = require('cookie-parser');
 app.use(cookieParser());
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-app.use('/api/bookmark', bookmarkRoutes);
-app.use('/api/adminBlog', adminBlogRoutes);
-app.use('/api/fundraiser', fundraiserRoutes);
-app.use('/api/organization', organizationRoutes);
-app.use(cookieParser())
-// define upload path
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 3000;
 
