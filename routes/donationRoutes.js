@@ -13,7 +13,7 @@ router.get('/:id/contributions', protect,getDonationContributions);
 router.get('/', getAllDonations);
 
 //get user donations
-router.get('/userDonations', protect, userDonations);
+router.get('/user-donations', protect, userDonations);
 
 //get single donation
 router.get('/:id', getSingleDonation);
