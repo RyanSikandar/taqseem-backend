@@ -34,15 +34,15 @@ const verifyContribution = async (req, res) => {
             })
             .session(session);
 
+        if (!contribution) {
+            await session.abortTransaction();
+            return res.status(404).json({ message: "Contribution not found" });
+        }
+
         // Check if current user matches donation author
         if (!contribution.donation.author._id.equals(req.user._id)) {
             await session.abortTransaction();
             return res.status(403).json({ message: "Unauthorized to verify this contribution" });
-        }
-
-        if (!contribution) {
-            await session.abortTransaction();
-            return res.status(404).json({ message: "Contribution not found" });
         }
 
         if (contribution.verified) {
