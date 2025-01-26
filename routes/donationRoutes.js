@@ -1,14 +1,18 @@
-const { getDonationContributions } = require('../controllers/contributionController');
+const { getDonationContributions, verifyContribution } = require('../controllers/contributionController');
 const { addDonation, getAllDonations, getSingleDonation, updateDonation, userDonations } = require('../controllers/donationController');
 const protect = require('../middleware/AuthMiddleware');
 
 const router = require('express').Router();
 
+
+// Verify contribution
+router.patch('/contribution/verify', protect, verifyContribution);
+
 // add a donation
 router.post('/', protect, addDonation);
 
 //get donation with contributions
-router.get('/:id/contributions', protect,getDonationContributions);
+router.get('/:id/contributions', protect, getDonationContributions);
 
 //get all donations
 router.get('/', getAllDonations);
@@ -21,6 +25,7 @@ router.get('/:id', getSingleDonation);
 
 //update a donation (change favs)
 router.patch('/:id', updateDonation);
+
 
 
 
