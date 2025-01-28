@@ -5,13 +5,19 @@ const authRoutes = require('./routes/AuthRoutes')
 const donationRoutes = require('./routes/donationRoutes')
 const app = express();
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 app.use('/api/auth', authRoutes);
 app.use('/api/donation', donationRoutes)
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGO_URI)
