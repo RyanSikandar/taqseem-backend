@@ -181,14 +181,14 @@ const logoutUser = asyncHandler(async (req, res) => {
 const getUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).select("-password")
     if (user) {
-        const { _id, name, email, image, description, cnic } = user
+        const { _id, name, email, image, description, cnic,location } = user
         res.status(200).json({
-            _id,
             name,
             email,
             image,
             description,
-            cnic
+            cnic,
+            location
         })
     }
     else {
