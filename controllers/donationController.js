@@ -69,7 +69,7 @@ const addDonation = async (req, res) => {
 const getAllDonations = async (req, res) => {
     try {
         // Fetch all donations from the database
-        const donations = await Donation.find().populate('author', 'name location image');
+        const donations = await Donation.find().select('-__v').populate('author', 'name location image');
 
         // Send the donations in the response
         res.status(200).json({ success: true, donations });
