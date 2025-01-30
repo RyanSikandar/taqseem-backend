@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const authRoutes = require('./routes/AuthRoutes')
 const donationRoutes = require('./routes/donationRoutes')
+const volunteerRoutes = require('./routes/volunteerRoutes')
 const app = express();
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 app.use('/api/auth', authRoutes);
 app.use('/api/donation', donationRoutes)
+app.use('/api/volunteer', volunteerRoutes)
 
 const PORT = process.env.PORT || 5000;
 
