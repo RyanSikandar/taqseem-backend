@@ -1,12 +1,12 @@
 const Contribution = require("../models/ContributionModel");
 const Donation = require("../models/DonationModel");
-
+const mongoose = require("mongoose");
 const getDonationContributions = async (req, res) => {
     const DonationId = req.params.id;
 
     try {
         // Fetch all contributions for the Donation
-        const contributions = await Contribution.find({ donation: DonationId }).populate('donation', 'title').populate('donor', 'name location image');
+        const contributions = await Contribution.find({ donation: DonationId }).populate('donation', 'title').populate('donor', 'name location image').sort('-donatedAt');
 
         // Send the contributions in the response
         res.status(200).json({ success: true, contributions });
@@ -16,7 +16,41 @@ const getDonationContributions = async (req, res) => {
     }
 }
 
-const mongoose = require("mongoose");
+const addContribution = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const user = req.user._id;
+        const { amount } = req.body;
+        const donationId = req.params.id;
+
+        if (!amount) {
+            return res.status(400).json({ message: "Amount is required" });
+        }
+
+        // Create a new contribution
+        let contribution = await Contribution.create({
+            donor: user,
+            donation: donationId,
+            amount
+        });
+
+        contribution = await contribution.populate([{
+            path: 'donation',
+            select: 'title currentAmount'
+        }, {
+            path: 'donor',
+            select: 'name location image'
+        }])
+
+        res.status(201).json({ success: true, contribution });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 
 const verifyContribution = async (req, res) => {
     const { id } = req.body;
@@ -90,5 +124,6 @@ const verifyContribution = async (req, res) => {
 
 module.exports = {
     getDonationContributions,
-    verifyContribution
+    verifyContribution,
+    addContribution
 }
