@@ -81,7 +81,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Validate image URL (Optional: Ensure it’s an S3 URL)
     const s3BucketName = 'ryan-taqseem';
-    if (!image.startsWith(`https://${s3BucketName}.s3.amazonaws.com/`)) {
+    if (!image.startsWith(`https://${s3BucketName}.s3.us-east-1.amazonaws.com/`)) {
         res.status(400);
         throw new Error('Invalid image URL');
     }
