@@ -1,4 +1,4 @@
-const { getDonationContributions, verifyContribution } = require('../controllers/contributionController');
+const { getDonationContributions, verifyContribution, addContribution } = require('../controllers/contributionController');
 const { addDonation, getAllDonations, getSingleDonation, updateDonation, userDonations } = require('../controllers/donationController');
 const protect = require('../middleware/authMiddleware');
 
@@ -10,6 +10,9 @@ router.patch('/contribution/verify', protect, verifyContribution);
 
 // add a donation
 router.post('/', protect, addDonation);
+
+//add a contribution
+router.post('/:id/contribute',protect, addContribution);
 
 //get donation with contributions
 router.get('/:id/contributions', protect, getDonationContributions);
