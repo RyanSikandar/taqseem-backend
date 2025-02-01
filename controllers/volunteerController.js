@@ -1,4 +1,4 @@
-const Volunteer = require("../models/VolunteerModel");
+const Volunteer = require("../models/VolunteerModel.js");
 
 const getAllVolunteers = async (req, res) => {
   try {
