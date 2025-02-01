@@ -81,7 +81,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Validate image URL (Optional: Ensure it’s an S3 URL)
     const s3BucketName = 'ryan-taqseem';
-    if (!image.startsWith(`https://${s3BucketName}.s3.amazonaws.com/`)) {
+    if (!image.startsWith(`https://${s3BucketName}.s3.us-east-1.amazonaws.com/`)) {
         res.status(400);
         throw new Error('Invalid image URL');
     }
@@ -124,51 +124,54 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 });
 
+const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-//Login User
-const loginUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body
-    // Validation request
-    if (!email || !password) {
-        res.status(400)
-        throw new Error("Please provide email and password")
-    }
-    //Check if user exists
-    const user = await User.findOne({ email })
-    if (!user) {
-        res.status(401)
-        throw new Error("Invalid credentials, user does not exist")
-    }
-    //User exists, Check if password matches
-    const isMatch = await bcrypt.compare(password, user.password)
-    //Genearate the token for the user
-    const token = generateToken(user._id)
+        // Validation request
+        if (!email || !password) {
+            return res.status(400).json({ message: "Please provide email and password" });
+        }
 
-    //Send http only cookie 
-    res.cookie("token", token, { httpOnly: true, expires: new Date(Date.now() + 24 * 60 * 60 * 1000), sameSite: "lax", secure: true })
-    //same site means front end and backend are on different domains
-    //secure means it is only sent over https
+        // Check if user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+           return res.status(404).json({ message: "User not found" });
+        }
 
-    if (user && isMatch) {
-        const { _id, name, email, image } = user
-        res.status(200).json({
-            _id,
-            name,
-            email,
-            image
-        })
-    }
-    else {
-        res.status(401)
-        throw new Error("Invalid credentials.")
+        // User exists, Check if password matches
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
 
-    }
+        // Generate the token for the user
+        const token = generateToken(user._id);
+        console.log(token);
 
-    if (!isMatch) {
-        res.status(401)
-        throw new Error("Invalid credentials, password does not match")
+        // Set http only cookie before sending the response
+        console.log("cookie being set");
+        res.cookie("token", token, {
+            httpOnly: true,
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            sameSite: "none",
+            secure: true
+        });
+        if (user) {
+            const { _id, name, email, image } = user;
+            res.status(200).json({
+                _id,
+                name,
+                email,
+                image
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error });
     }
-})
+};
+
+
 const logoutUser = asyncHandler(async (req, res) => {
     res.cookie("token", "", { httpOnly: true, expires: new Date(0), sameSite: "lax", secure: true })
     return res.status(200).json({ message: "User succesfully logged out." })
@@ -178,14 +181,14 @@ const logoutUser = asyncHandler(async (req, res) => {
 const getUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).select("-password")
     if (user) {
-        const { _id, name, email, image, description, cnic } = user
+        const { _id, name, email, image, description, cnic,location } = user
         res.status(200).json({
-            _id,
             name,
             email,
             image,
             description,
-            cnic
+            cnic,
+            location
         })
     }
     else {
@@ -196,17 +199,18 @@ const getUser = asyncHandler(async (req, res) => {
 })
 
 const loginStatus = asyncHandler(async (req, res) => {
-    const token = req.cookies.token
+    const token = req.cookies.token;
     if (!token) {
-        res.json(false)
+        return res.json(false);
     }
-    //Verify Token
-    const verified = jwt.verify(token, process.env.JWT_SECRET)
-    if (verified) {
-        return res.json(true)
+    try {
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        return res.json(verified ? true : false);
+    } catch (error) {
+        return res.status(401).json({ message: 'Invalid or expired token' });
     }
-    res.send("User is logged in")
-})
+});
+
 
 module.exports = {
     registerUser,
