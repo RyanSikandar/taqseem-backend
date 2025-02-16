@@ -16,8 +16,8 @@ const s3Client = new S3Client({
 
 
 
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (payload) => {
+    return jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: '1d'
     })
 };
@@ -97,8 +97,13 @@ const registerUser = asyncHandler(async (req, res) => {
         image: image, //storing the public url in the database
     });
 
-    // Generate the token for the user
-    const token = generateToken(newUser._id);
+    // Generate the token for the user with id and role
+    const payload = {
+        user: newUser._id,
+        admin: newUser.isAdmin
+    }
+
+    const token = generateToken(payload);
 
     // Send HTTP-only cookie
     res.cookie('token', token, {
@@ -117,6 +122,7 @@ const registerUser = asyncHandler(async (req, res) => {
             email,
             image: image,
             description,
+            isAdmin: newUser.isAdmin
         });
     } else {
         res.status(400);
@@ -136,7 +142,7 @@ const loginUser = async (req, res) => {
         // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
-           return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found" });
         }
 
         // User exists, Check if password matches
@@ -146,11 +152,11 @@ const loginUser = async (req, res) => {
         }
 
         // Generate the token for the user
-        const token = generateToken(user._id);
-        console.log(token);
-
-        // Set http only cookie before sending the response
-        console.log("cookie being set");
+        const payload = {
+            user: user._id,
+            admin: user.isAdmin
+        }
+        const token = generateToken(payload);
         res.cookie("token", token, {
             httpOnly: true,
             expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -159,11 +165,13 @@ const loginUser = async (req, res) => {
         });
         if (user) {
             const { _id, name, email, image } = user;
+            console.log("is user admin", user.isAdmin);
             res.status(200).json({
                 _id,
                 name,
                 email,
-                image
+                image,
+                isAdmin: user.isAdmin
             });
         }
     } catch (error) {
@@ -181,7 +189,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 const getUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).select("-password")
     if (user) {
-        const { _id, name, email, image, description, cnic,location } = user
+        const { _id, name, email, image, description, cnic, location } = user
         res.status(200).json({
             name,
             email,

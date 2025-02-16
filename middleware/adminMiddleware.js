@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const User = require("../models/UserModel");
 const jwt = require("jsonwebtoken");
 
-const protect = asyncHandler(async (req, res, next) => {
+const roleProtection = asyncHandler(async (req, res, next) => {
     try {
         const token = req.cookies.token;
         if (!token) {
@@ -12,13 +12,13 @@ const protect = asyncHandler(async (req, res, next) => {
 
         //Verify Token
         const verified = jwt.verify(token, process.env.JWT_SECRET)
-        //Get user id from token
-        const user = await User.findById(verified.user).select("-password")
-        if (!user) {
-            res.status(404)
-            throw new Error("User not found")
+        //Get admin property from token
+        const isAdmin = verified.admin
+        console.log("is user admin", isAdmin)
+        if (!isAdmin) {
+            res.status(401).json({ message: "Unauthorized" })
         }
-        req.user = user
+
         next()
     }
     catch (e) {
@@ -27,4 +27,4 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 })
 
-module.exports=protect;
+module.exports = roleProtection;

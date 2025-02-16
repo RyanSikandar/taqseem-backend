@@ -31,6 +31,10 @@ const userSchema = new Schema({
         type: Number,
         required: [true, 'CNIC is required'],
         unique: true
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
     }
 });
 
